@@ -14,6 +14,7 @@ import tensorflow as tf
 path_to_note_file = sys.argv[1]
 path_to_model = sys.argv[2]
 output_file = sys.argv[3]
+path_to_start_sequences = "start_sequences" #TODO: some real location idk
 
 # loading, loading, loading note file
 with open(path_to_note_file, 'rb') as path:
@@ -25,10 +26,11 @@ number_of_sounds = len(sounds_names)
 # mapping
 notes_in_int = dict((n, i) for i, n in enumerate(sounds_names))
 
-sequence_length = 64
+sequence_length = 100
 network_input = []
 
-# also important for random sequence
+# we probably don't need this anymore as we have our separate start sequences
+"""
 for i in range(0, len(notes) - sequence_length):
     sequence_input = notes[i:i + sequence_length]
     sequence_output = notes[i + sequence_length]
@@ -38,6 +40,13 @@ number_of_patterns = len(network_input)
 
 normalized_input = np.reshape(network_input, (number_of_patterns, sequence_length, 1))
 normalized_input = normalized_input / float(number_of_sounds)
+"""
+
+with open(path_to_start_sequences, 'r') as path:
+    inputs = path.read().splitlines()
+
+for seq in inputs:
+    network_input = [[notes_in_int[n] for n in seq.split() if n in notes][:100] for seq in inputs]
 
 model = tf.keras.models.load_model(path_to_model, compile=False)  # loading model
 opt = tf.compat.v1.train.RMSPropOptimizer(
