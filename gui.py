@@ -1,13 +1,15 @@
-from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QLineEdit, QMainWindow, QStatusBar, QToolBar, QDesktopWidget, \
-    QVBoxLayout, QPushButton, QFileDialog, QMessageBox
 import sys
+from gui_generate_window import GeneratorWindow
+from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QMainWindow, QDesktopWidget, \
+    QVBoxLayout, QPushButton
+from PyQt5 import QtCore
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         self.init_ui()
-        self.wind = None
+        self.generate_window = None
 
     def init_ui(self):
         self.setWindowTitle("Python NN Music Generator")
@@ -24,6 +26,7 @@ class MainWindow(QMainWindow):
         main_widget = QWidget(self)
         main_layout = QVBoxLayout()
         title = QLabel("<h1> Generator Muzyki - Zawiadaka 6502! </h1>")
+        title.setAlignment(QtCore.Qt.AlignCenter)
         up_layout.addWidget(title)
 
         gen_button = QPushButton('Generate', self)
@@ -52,8 +55,8 @@ class MainWindow(QMainWindow):
         self.move(qr.topLeft())
 
     def init_generator_window(self):
-        self.wind = GeneratorWindow()
-        self.wind.show()
+        self.generate_window = GeneratorWindow(self)
+        self.generate_window.show()
         self.hide()
 
     # def init_library_window(self):
@@ -67,38 +70,6 @@ class MainWindow(QMainWindow):
     #     self.hide()
 
 
-class GeneratorWindow(QMainWindow):
-    def __init__(self):
-        super(GeneratorWindow, self).__init__()
-        self.init_ui()
-
-    def init_ui(self):
-        self.setWindowTitle("Gdy pytają o pochodzenie, milczę.")
-        self.setFixedSize(880, 680)
-        choose_dir_button = QPushButton("Choose button", self)
-        choose_dir_button.clicked.connect(self.choose)
-        self.setCentralWidget(choose_dir_button)
-        self.center()
-
-    def closeEvent(self, event):
-        reply = QMessageBox.question(self, 'Window Close', 'Are you sure you want to close the window?',
-                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-
-        if reply == QMessageBox.Yes:
-            win.show()
-            event.accept()
-        else:
-            event.ignore()
-
-    def center(self):
-        qr = self.frameGeometry()
-        cp = QDesktopWidget().availableGeometry().center()
-        qr.moveCenter(cp)
-        self.move(qr.topLeft())
-
-    def choose(self):
-        file = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
-        print(file)
 
 
 if __name__ == '__main__':
