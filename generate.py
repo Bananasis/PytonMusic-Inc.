@@ -1,139 +1,119 @@
-import pickle
 import numpy as np
-
+import random
+from tensorflow.keras.models import load_model
 from music21 import instrument, note, stream, chord, duration
 
-import os
-import sys
-import tensorflow as tf
-
-# program arguments:
-# - path to file with notes,
-# - path to trained model,
-# - output MIDI file.
-path_to_note_file = sys.argv[1]
-path_to_model = sys.argv[2]
-output_file = sys.argv[3]
-path_to_start_sequences = "start_sequences" #TODO: some real location idk
-
-# loading, loading, loading note file
-with open(path_to_note_file, 'rb') as path:
-    notes = list(pickle.load(path))
-
-sounds_names = sorted(set(notes))
-number_of_sounds = len(sounds_names)
-
-# mapping
-notes_in_int = dict((n, i) for i, n in enumerate(sounds_names))
-
-sequence_length = 100
-network_input = []
-
-# we probably don't need this anymore as we have our separate start sequences
-"""
-for i in range(0, len(notes) - sequence_length):
-    sequence_input = notes[i:i + sequence_length]
-    sequence_output = notes[i + sequence_length]
-    network_input.append([notes_in_int[n] for n in sequence_input])
-
-number_of_patterns = len(network_input)
-
-normalized_input = np.reshape(network_input, (number_of_patterns, sequence_length, 1))
-normalized_input = normalized_input / float(number_of_sounds)
-"""
-
-with open(path_to_start_sequences, 'r') as path:
-    inputs = path.read().splitlines()
-
-for seq in inputs:
-    network_input = [[notes_in_int[n] for n in seq.split() if n in notes][:100] for seq in inputs]
-
-model = tf.keras.models.load_model(path_to_model, compile=False)  # loading model
-opt = tf.compat.v1.train.RMSPropOptimizer(
-    0.002)  # not used, only for model to compile
-
-model.compile(loss='categorical_crossentropy', optimizer=opt)
-
-# decoder from int to natural representation
-notes_in_notes = dict((i, n) for i, n in enumerate(sounds_names))
-
-# choose random start sequence
-start = np.random.randint(0, len(network_input))
-initial_pattern = network_input[start]  # TODO fix this idea with random pattern
-
-output = []
-
-# actual notes generation
-for note_index in range(500):  # TODO uzmiennic
-    input_pattern = np.reshape(initial_pattern, (1, len(initial_pattern), 1))  # preparing input for model
-    input_pattern = input_pattern / float(number_of_sounds)  # normalization
-
-    output_vector = model.predict(input_pattern,
-                                  verbose=0)  # predicting
-
-    # picking best note
-    best_note_index = np.argmax(output_vector)
-    best = notes_in_notes[best_note_index]  # avoiding strange behavior
-    output.append(best)
-
-    # adding predicted note to pattern we use for prediction
-    initial_pattern.append(best_note_index)
-    # transform onr to right, discard first note from pattern and add best
-    initial_pattern = initial_pattern[1:len(initial_pattern)]
+generated_song = None
 
 
-offset_progression = [0.5, 0.5, 0.5, 1.0, 1.5]
-rhythmic_values = [0.0, 0.0, 0.5, 1.0, 1.5, 2.0]
+def prepare_model(genre):
+    model = load_model("models/{0}/{0}_model.h5".format(genre))
+    with open("models/{0}/{0}_notes".format(genre), "r") as file:
+        notes = file.read().split()
+    sounds = sorted(set(notes))
+    return model, sounds
 
-offsets = []
-rhythm = [] 
 
-while len(offsets) < 501: 
-    sequence_length = np.random.randint(2, 6)  
-    repetition_number = np.random.randint(1, 5) 
-    offset_sequence = []  
-    rhythmic_sequence = []  
+# TODO: learn to preserve the rhythm of the starting sequence so that it's easily recognizable
+def prepare_start_sequence(sounds, name):
+    index = {
+        "stranger_things": 0,
+        "africa": 1,
+        "clocks": 2,
+        "dancing_queen": 3,
+        "dont_start_now": 4,
+    }[name]
+    sound_to_int = {n: i for i, n in enumerate(sounds)}
+    with open("data/start_sequences", "r") as path:
+        sequences = path.read().splitlines()
+    chosen_seq = sequences[index].split()
+    sequence = [sound_to_int[s] for s in chosen_seq if s in sounds][:100]
+    return sequence, chosen_seq[-15:]
 
-    for j in range(0, sequence_length):
-        offset_sequence.append(offset_progression[np.random.randint(0, len(offset_progression))])
-        rhythmic_sequence.append(
-            offset_sequence[-1] + rhythmic_values[np.random.randint(0, len(rhythmic_values))])
 
-    for j in range(0, repetition_number):
-        offsets += offset_sequence
-        rhythm += rhythmic_sequence
+def sequence_to_song(sequence):
+    global generated_song
 
-offset = 0 
-counter = 0  
-partition = []  
-for initial_pattern in output:
-    d = duration.Duration()  
-    d.quarterLength = rhythm[counter]  
+    possible_offsets = [0.5, 0.5, 0.5, 1.0, 1.5]
+    rhythmic_values = [0.0, 0.0, 0.5, 1.0, 1.5, 2.0]
+    offsets = []
+    rhythm = []
 
-    if ('.' in initial_pattern) or initial_pattern.isdigit():
-        partials_sounds = list(map(int, initial_pattern.split('.')))
-        notes_in_chord = []
+    while len(offsets) < 266:
+        sequence_length = np.random.randint(2, 6)
+        repeat_count = np.random.randint(1, 3)
 
-        for n in partials_sounds:
-            current_note = note.Note(n) 
-            current_note.storedInstrument = instrument.Piano()  
-            notes_in_chord.append(current_note)
+        offset_sequence = [
+            random.choice(possible_offsets) for _ in range(sequence_length)
+        ]
+        rhythmic_sequence = [
+            off + random.choice(rhythmic_values) for off in offset_sequence
+        ]
 
-        current_chord = chord.Chord(notes_in_chord) 
+        offsets += repeat_count * offset_sequence
+        rhythm += repeat_count * rhythmic_sequence
 
-        current_chord.offset = offset 
-        current_chord.duration = d 
-        partition.append(current_chord)  
+    offset = 0
+    part = []
+    for i, sound in enumerate(sequence):
+        dur = duration.Duration()
+        dur.quarterLength = rhythm[i]
 
-    else:
-        current_note = note.Note(initial_pattern)  
-        current_note.offset = offset  
-        current_note.duration = d  
-        current_note.storedInstrument = instrument.Piano()  
-        partition.append(current_note)  
+        if ("." in sound) or sound.isdigit():
+            int_notes = [int(n) for n in sound.split(".")]
+            real_notes = []
 
-    offset += offsets[counter]  
-    counter += 1
+            for n in int_notes:
+                current_note = note.Note(n)
+                current_note.storedInstrument = instrument.Piano()
+                real_notes.append(current_note)
 
-midi_stream = stream.Stream(partition)
-midi_stream.write('midi', fp=output_file)
+            current_chord = chord.Chord(real_notes)
+            current_chord.offset = offset
+            current_chord.duration = dur
+            part.append(current_chord)
+
+        else:
+            current_note = note.Note(sound)
+            current_note.offset = offset
+            current_note.duration = dur
+            current_note.storedInstrument = instrument.Piano()
+            part.append(current_note)
+
+        offset += offsets[i]
+
+    generated_song = stream.Stream(part)
+
+
+def generate(genre, start_seq):
+    model, sounds = prepare_model(genre)
+    int_to_sound = {i: n for i, n in enumerate(sounds)}
+    input_sequence, output_sequence = prepare_start_sequence(sounds, start_seq)
+
+    for note_index in range(250):
+        real_input = np.reshape(input_sequence, (1, len(input_sequence), 1)) / len(
+            sounds
+        )
+        output = model.predict(real_input, verbose=0)
+        predicted_index = np.argmax(output)
+        output_sequence.append(int_to_sound[predicted_index])
+        input_sequence.append(predicted_index)
+        input_sequence = input_sequence[1:]
+
+    sequence_to_song(output_sequence)
+
+
+def play():
+    if generated_song:
+        generated_song.show("midi")
+
+
+def save(path):
+    if generated_song:
+        generated_song.write("midi", path)
+
+
+if __name__ == "__main__":
+    generate("test", "clocks")
+    save("out.mid")
+
