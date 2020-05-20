@@ -34,7 +34,7 @@ class MainWindow(QMainWindow):
         down_layout.addWidget(gen_button)
 
         lib_button = QPushButton('Library', self)
-        # lib_button.clicked.connect(self.init_library_window)
+        lib_button.clicked.connect(self.init_library_window)
         down_layout.addWidget(lib_button)
 
         exa_button = QPushButton('Example', self)
@@ -59,10 +59,10 @@ class MainWindow(QMainWindow):
         self.generate_window.show()
         self.hide()
 
-    # def init_library_window(self):
-    #     self.wind = LibraryWindow()
-    #     self.wind.show()
-    #     self.hide()
+    def init_library_window(self):
+        self.wind = LibraryWindow()
+        self.wind.show()
+        self.hide()
     #
     # def init_example_window(self):
     #     self.wind = ExampleWindow()
