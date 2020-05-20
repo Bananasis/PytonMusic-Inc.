@@ -1,5 +1,7 @@
 import sys
+import os
 from gui_generate_window import GeneratorWindow
+from gui_library_window import LibraryWindow
 from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QMainWindow, QDesktopWidget, \
     QVBoxLayout, QPushButton
 from PyQt5 import QtCore
@@ -8,8 +10,14 @@ from PyQt5 import QtCore
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
+        try:
+            os.mkdir('Lib')
+        except FileExistsError:
+            pass
+
         self.init_ui()
         self.generate_window = None
+        self.library_window = None
 
     def init_ui(self):
         self.setWindowTitle("Python NN Music Generator")
@@ -60,16 +68,14 @@ class MainWindow(QMainWindow):
         self.hide()
 
     def init_library_window(self):
-        self.wind = LibraryWindow()
-        self.wind.show()
+        self.library_window = LibraryWindow(self)
+        self.library_window.show()
         self.hide()
     #
     # def init_example_window(self):
     #     self.wind = ExampleWindow()
     #     self.wind.show()
     #     self.hide()
-
-
 
 
 if __name__ == '__main__':

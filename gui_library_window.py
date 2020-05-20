@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QMainWindow, QDesktopWidget, \
     QPushButton, QMessageBox, QGridLayout, QWidget, QLabel, QListWidget, QListWidgetItem
 from PyQt5 import QtCore
 
+
 class LibraryWindow(QMainWindow):
     def __init__(self, main_win):
         super(LibraryWindow, self).__init__()
@@ -12,10 +13,6 @@ class LibraryWindow(QMainWindow):
         self.main_widget = QWidget()
         self.to_play = None
         self.stop_playing = False
-        try:
-            os.mkdir('Lib')
-        except:
-            pass
         freq = 44100
         bitsize = -16
         channels = 2
@@ -38,24 +35,24 @@ class LibraryWindow(QMainWindow):
         layout.addWidget(self.file_list, 0, 0, 5, 2)
         play_button = QPushButton('Play!', self)
         play_button.clicked.connect(self.play)
-        layout.addWidget(play_button,5,0)
+        layout.addWidget(play_button, 5, 0)
         stop_button = QPushButton('Stop', self)
         stop_button.clicked.connect(self.stop)
-        layout.addWidget(stop_button,5,1)
+        layout.addWidget(stop_button, 5, 1)
         self.main_widget.setLayout(layout)
         self.setCentralWidget(self.main_widget)
         self.center()
-    
+
     def stop(self):
         self.stop_playing = True
 
     def play(self):
-        if self.to_play == None:
+        if self.to_play is None:
             QMessageBox.critical(self, 'Error', 'No file selected!', QMessageBox.Ok)
         else:
             x = threading.Thread(target=self.play_audio, args=())
             x.start()
-            
+
     def play_audio(self):
         cdir = os.path.join(os.getcwd(), 'Lib')
         clock = pygame.time.Clock()
