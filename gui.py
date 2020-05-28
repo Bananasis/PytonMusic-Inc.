@@ -11,7 +11,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         try:
-            os.mkdir('Lib')
+            os.mkdir('lib')
         except FileExistsError:
             pass
 
