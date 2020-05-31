@@ -4,24 +4,28 @@ from tensorflow.keras.models import load_model
 from music21 import instrument, note, stream, chord, duration
 
 generated_song = None
-
+lazy_models = {}
 
 def prepare_model(genre):
-    model = load_model("models/{0}/{0}_model.h5".format(genre))
+    if genre not in lazy_models:
+        model = load_model("models/{0}/{0}_model.h5".format(genre))
+        lazy_models.setdefault(genre, model)
+    else:
+        model = lazy_models.get(genre)
+
     with open("models/{0}/{0}_notes".format(genre), "r") as file:
         notes = file.read().split()
     sounds = sorted(set(notes))
     return model, sounds
 
 
-# TODO: learn to preserve the rhythm of the starting sequence so that it's easily recognizable
 def prepare_start_sequence(sounds, name):
     index = {
-        "stranger_things": 0,
-        "africa": 1,
-        "clocks": 2,
-        "dancing_queen": 3,
-        "dont_start_now": 4,
+        "The Stranger Things Theme": 0,
+        "Africa by Toto": 1,
+        "Clocks by Coldplay": 2,
+        "Dancing Queen by Abba": 3,
+        "Don't Start Now by Dua Lipa": 4,
     }[name]
     sound_to_int = {n: i for i, n in enumerate(sounds)}
     with open("data/start_sequences", "r") as path:
@@ -39,7 +43,7 @@ def sequence_to_song(sequence):
     offsets = []
     rhythm = []
 
-    while len(offsets) < 266:
+    while len(offsets) < 116:
         sequence_length = np.random.randint(2, 6)
         repeat_count = np.random.randint(1, 3)
 
@@ -85,15 +89,14 @@ def sequence_to_song(sequence):
     generated_song = stream.Stream(part)
 
 
-def generate(genre, start_seq):
+def generate(genre, start_seq, monitoring_progress=False):
     model, sounds = prepare_model(genre)
     int_to_sound = {i: n for i, n in enumerate(sounds)}
     input_sequence, output_sequence = prepare_start_sequence(sounds, start_seq)
 
-    for note_index in range(250):
-        real_input = np.reshape(input_sequence, (1, len(input_sequence), 1)) / len(
-            sounds
-        )
+    for note_index in range(100):
+        if monitoring_progress: yield note_index
+        real_input = np.reshape(input_sequence, (1, len(input_sequence), 1)) / len(sounds)
         output = model.predict(real_input, verbose=0)
         predicted_index = np.argmax(output)
         output_sequence.append(int_to_sound[predicted_index])

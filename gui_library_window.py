@@ -27,7 +27,7 @@ class LibraryWindow(QMainWindow):
         layout = QGridLayout()
         self.file_list = QListWidget()
         self.file_list.resize(400, 240)
-        for filename in os.listdir(os.path.join(os.getcwd(), 'Lib')):
+        for filename in os.listdir(os.path.join(os.getcwd(), 'lib')):
             if filename.endswith('.mid'):
                 item = QListWidgetItem(filename)
                 self.file_list.addItem(item)
@@ -54,7 +54,7 @@ class LibraryWindow(QMainWindow):
             x.start()
 
     def play_audio(self):
-        cdir = os.path.join(os.getcwd(), 'Lib')
+        cdir = os.path.join(os.getcwd(), 'lib')
         clock = pygame.time.Clock()
         pygame.mixer.music.load(os.path.join(cdir, self.to_play))
         pygame.mixer.music.play()
@@ -67,9 +67,10 @@ class LibraryWindow(QMainWindow):
         self.to_play = self.file_list.selectedItems()[0].text()
 
     def closeEvent(self, event):
-        reply = QMessageBox.question(self, 'Window Close', 'Are you sure you want to return to main window?',
+        reply = QMessageBox.question(self, 'Window Close', 'Are you sure you want to return to the main window?',
                                      QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if reply == QMessageBox.Yes:
+            self.stop_playing = True
             self.main_window.show()
             event.accept()
         else:
