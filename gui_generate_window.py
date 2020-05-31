@@ -81,7 +81,7 @@ class GeneratorWindow(QMainWindow):
         filename = re.sub(r'\W', '', self.file_name.text()) + ".mid"
         path = os.getcwd() + "/lib/" + filename
 
-        for cur_progress in generate(self.model_type, self.start_sequence, monitor_progress=True):
+        for cur_progress in generate(self.model_type, self.start_sequence, monitoring_progress=True):
             self.progress_bar.setValue(cur_progress)
             self.progress_bar.repaint()
 
