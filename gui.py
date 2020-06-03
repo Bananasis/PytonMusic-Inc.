@@ -11,10 +11,6 @@ from PyQt5 import QtCore
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
-        try:
-            os.mkdir('lib')
-        except FileExistsError:
-            pass
 
         self.init_ui()
         self.generate_window = None
@@ -35,7 +31,7 @@ class MainWindow(QMainWindow):
         down_layout = QVBoxLayout()
         main_widget = QWidget(self)
         main_layout = QVBoxLayout()
-        title = QLabel("<h1> Generator Muzyki - Zawiadaka 6502! </h1>")
+        title = QLabel("<h1> Music-Oriented Synapses 6502 </h1>")
         title.setAlignment(QtCore.Qt.AlignCenter)
         up_layout.addWidget(title)
 

@@ -5,10 +5,12 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.callbacks import ModelCheckpoint
 from music21 import converter, instrument, note, chord, stream
 
+data_dir = os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + "/../data/")
 
 def parse_files(genre):
     compositions = []
-    with os.scandir("data/" + genre) as files:
+    #the data should be stored in <projectroot>/data/<genre>/
+    with os.scandir(os.path.join(data_dir, genre)) as files:
         for f in files:
             if f.name.endswith(".mid") or f.name.endswith(".MID") and f.is_file():
                 print("Parsing {}".format(f.name))
@@ -128,17 +130,12 @@ def train(genre):
     input, target = prepare_data(compositions)
     model = prepare_model(input.shape[1:])
 
+    model_path = os.path.join(data_dir, "net2/models", genre, "model.h5")
     checkpoint = ModelCheckpoint(
-        genre + "_model.h5", monitor="loss", verbose=0, save_best_only=True, mode="min"
+        model_path, monitor="loss", verbose=0, save_best_only=True, mode="min"
     )
 
-    print(
-        "Your new model is located at {0}/{1}_model.h5.\n"
-        "In order to use it for generating, move it to models/{1}/ "
-        "in the project's directory along with the {1}_notes file.".format(
-            os.getcwd(), genre
-        ),
-    )
+    print(f"Your new model is located at {model_path}.")
 
     model.fit(input, target, epochs=200, batch_size=1024, callbacks=[checkpoint])
 

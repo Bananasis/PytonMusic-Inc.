@@ -5,6 +5,9 @@ from PyQt5.QtWidgets import QMainWindow, QDesktopWidget, \
     QPushButton, QMessageBox, QGridLayout, QWidget, QLabel, QListWidget, QListWidgetItem
 from PyQt5 import QtCore
 
+lib_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib")
+if not os.path.exists(lib_dir):
+    os.makedirs(lib_dir)
 
 class LibraryWindow(QMainWindow):
     def __init__(self, main_win):
@@ -27,7 +30,7 @@ class LibraryWindow(QMainWindow):
         layout = QGridLayout()
         self.file_list = QListWidget()
         self.file_list.resize(400, 240)
-        for filename in os.listdir(os.path.join(os.getcwd(), 'lib')):
+        for filename in os.listdir(lib_dir):
             if filename.endswith('.mid'):
                 item = QListWidgetItem(filename)
                 self.file_list.addItem(item)
@@ -54,9 +57,8 @@ class LibraryWindow(QMainWindow):
             x.start()
 
     def play_audio(self):
-        cdir = os.path.join(os.getcwd(), 'lib')
         clock = pygame.time.Clock()
-        pygame.mixer.music.load(os.path.join(cdir, self.to_play))
+        pygame.mixer.music.load(os.path.join(lib_dir, self.to_play))
         pygame.mixer.music.play()
         while pygame.mixer.music.get_busy() and not self.stop_playing:
             clock.tick(30)

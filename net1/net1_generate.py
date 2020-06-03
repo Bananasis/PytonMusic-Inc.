@@ -1,43 +1,46 @@
-import numpy as np
+import os
 import random
+import numpy as np
 from tensorflow.keras.models import load_model
 from music21 import instrument, note, stream, chord, duration
 
-generated_song = None
 lazy_models = {}
 
+project_dir = os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + "/..")
+model_dir = os.path.join(project_dir, "data/net1/models")
+start_dir = os.path.join(project_dir, "data/net1/start")
+output_dir = os.path.join(project_dir, "lib")
+
 def prepare_model(genre):
+    global lazy_models
     if genre not in lazy_models:
-        model = load_model("models/{0}/{0}_model.h5".format(genre))
+        model = load_model(os.path.join(model_dir, genre, "model.h5"))
         lazy_models.setdefault(genre, model)
     else:
         model = lazy_models.get(genre)
 
-    with open("models/{0}/{0}_notes".format(genre), "r") as file:
+    with open(os.path.join(model_dir, genre, "notes"), "r") as file:
         notes = file.read().split()
     sounds = sorted(set(notes))
     return model, sounds
 
 
 def prepare_start_sequence(sounds, name):
-    index = {
-        "The Stranger Things Theme": 0,
-        "Africa by Toto": 1,
-        "Clocks by Coldplay": 2,
-        "Dancing Queen by Abba": 3,
-        "Don't Start Now by Dua Lipa": 4,
+    file = {
+        "The Stranger Things Theme": "Stranger",
+        "Africa by Toto": "Toto",
+        "Clocks by Coldplay": "Coldplay",
+        "Dancing Queen by Abba": "Abba",
+        "Don't Start Now by Dua Lipa": "Dua",
     }[name]
     sound_to_int = {n: i for i, n in enumerate(sounds)}
-    with open("data/start_sequences", "r") as path:
-        sequences = path.read().splitlines()
-    chosen_seq = sequences[index].split()
+    with open(os.path.join(start_dir, file), "r") as path:
+        chosen_seq = path.read().split()
     sequence = [sound_to_int[s] for s in chosen_seq if s in sounds][:100]
     return sequence, chosen_seq[-15:]
 
 
 def sequence_to_song(sequence):
-    global generated_song
-
     possible_offsets = [0.5, 0.5, 0.5, 1.0, 1.5]
     rhythmic_values = [0.0, 0.0, 0.5, 1.0, 1.5, 2.0]
     offsets = []
@@ -86,37 +89,26 @@ def sequence_to_song(sequence):
 
         offset += offsets[i]
 
-    generated_song = stream.Stream(part)
+    return stream.Stream(part)
 
 
-def generate(genre, start_seq, monitoring_progress=False):
+def generate(genre, start_seq, name):
     model, sounds = prepare_model(genre)
     int_to_sound = {i: n for i, n in enumerate(sounds)}
     input_sequence, output_sequence = prepare_start_sequence(sounds, start_seq)
 
     for note_index in range(100):
-        if monitoring_progress: yield note_index
-        real_input = np.reshape(input_sequence, (1, len(input_sequence), 1)) / len(sounds)
+        yield note_index
+        real_input = np.reshape(input_sequence, (1, len(input_sequence), 1))/len(sounds)
         output = model.predict(real_input, verbose=0)
         predicted_index = np.argmax(output)
         output_sequence.append(int_to_sound[predicted_index])
         input_sequence.append(predicted_index)
         input_sequence = input_sequence[1:]
 
-    sequence_to_song(output_sequence)
-
-
-def play():
-    if generated_song:
-        generated_song.show("midi")
-
-
-def save(path):
-    if generated_song:
-        generated_song.write("midi", path)
+    song = sequence_to_song(output_sequence)
+    song.write("midi", os.path.join(output_dir, name))
 
 
 if __name__ == "__main__":
-    generate("test", "clocks")
-    save("out.mid")
-
+    list(generate("test", "Clocks by Coldplay", "nwm"))

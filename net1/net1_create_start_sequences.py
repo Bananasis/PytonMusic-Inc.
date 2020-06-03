@@ -1,10 +1,16 @@
 import os
 from music21 import converter, instrument, note, chord, stream
 
-lines = []
-for file in os.listdir("./startseq"):
-    file = "./startseq/"+file
-    midi = converter.parse(file)
+data_dir = os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + "/../data/")
+song_dir = os.path.join(data_dir, "start_songs")
+output_dir = os.path.join(data_dir, "net1/start")
+
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
+
+for file in os.listdir(song_dir):
+    file_path = os.path.join(song_dir, file)
+    midi = converter.parse(file_path)
     part = sorted(instrument.partitionByInstrument(midi), key=lambda p: len(p), reverse=True)
 
     for p in part:
@@ -24,9 +30,6 @@ for file in os.listdir("./startseq"):
         elif isinstance(sound, chord.Chord):
             sounds.append('.'.join(str(n) for n in sound.normalOrder))
             
-    lines.append(sounds)
-
-with open("start_sequences", 'w') as f:
-    for line in lines:
-        f.write(" ".join(line))
+    with open(os.path.join(output_dir, file.split()[0]), 'w') as f:
+        f.write(" ".join(sounds))
         f.write('\n')

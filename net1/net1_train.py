@@ -5,14 +5,15 @@ from tensorflow.keras.layers import Dense, Dropout, LSTM, Activation
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.utils import to_categorical
 from music21 import converter, instrument, note, chord, stream
-#from keras.utils import np_utils
 
+data_dir = os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + "/../data/")
+models_dir =  os.path.join(data_dir, "net1/models")
 
 def parse_files(genre):
     sounds = []
-    with os.scandir("data/" + genre) as files:
+    with os.scandir(os.path.join(data_dir, genre)) as files:
         for f in files:
-            if f.name.endswith(".mid") and f.is_file():
+            if f.name.endswith(".mid") or f.name.endswith(".MID") and f.is_file():
                 print("Parsing {}".format(f.name))
                 midi = converter.parse(f.path)
                 try:
@@ -27,7 +28,8 @@ def parse_files(genre):
                     elif isinstance(sound, chord.Chord):
                         sounds.append(".".join(str(n) for n in sound.normalOrder))
 
-    with open(genre + "_notes", 'w') as f:
+    notes_path = os.join(models_dir, genre, "notes")
+    with open(notes_path, 'w') as f:
         f.write(" ".join(sounds))
 
     return sounds
@@ -80,17 +82,12 @@ def train(genre):
     input, target, output_range = prepare_data(sounds)
     model = prepare_model(input.shape, output_range)
 
+    model_path = os.path.join(models_dir, genre, "model.h5")
     checkpoint = ModelCheckpoint(
-        genre + "_model.h5", monitor="loss", verbose=0, save_best_only=True, mode="min"
+        model_path, monitor="loss", verbose=0, save_best_only=True, mode="min"
     )
 
-    print(
-        "Your new model is located at {0}/{1}_model.h5.\n"\
-        "In order to use it for generating, move it to models/{1}/ "\
-        "in the project's directory along with the {1}_notes file.".format(
-            os.getcwd(), genre
-        ),
-    )
+    print(f"Your new model is located at {model_path}.")
 
     model.fit(input, target, epochs=200, batch_size=1024, callbacks=[checkpoint])
 

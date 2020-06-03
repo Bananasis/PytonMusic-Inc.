@@ -10,9 +10,15 @@ from PyQt5.QtWidgets import (
     QLineEdit,
     QProgressBar,
 )
-from generate import generate, save
+
 import re
 import os
+import sys
+
+project_path = os.path.dirname(os.path.abspath(__file__))
+sys.path.extend([os.path.join(project_path, "net1"), os.path.join(project_path, "net2")])
+import net1_generate as net1
+import net2_generate as net2
 
 
 class GeneratorWindow(QMainWindow):
@@ -77,15 +83,14 @@ class GeneratorWindow(QMainWindow):
         self.generate_button.repaint()
         self.progress_bar.show()
         self.progress_bar.repaint()
-
+        
+        generate = net1.generate if True else net2.generate #TODO
         filename = re.sub(r'\W', '', self.file_name.text()) + ".mid"
-        path = os.getcwd() + "/lib/" + filename
+        path = project_path + "/lib/" + filename
 
-        for cur_progress in generate(self.model_type, self.start_sequence, monitoring_progress=True):
+        for cur_progress in generate(self.model_type, self.start_sequence, filename):
             self.progress_bar.setValue(cur_progress)
             self.progress_bar.repaint()
-
-        save(path)
 
         self.generate_button.setText("Generate")
         self.generate_button.repaint()
@@ -94,7 +99,7 @@ class GeneratorWindow(QMainWindow):
         QMessageBox.information(
             self,
             "Success",
-            "Your file has been saved to<br />{}".format(path)
+            f"Your file has been saved to<br />{path}"
         )
 
     def closeEvent(self, event):
