@@ -36,7 +36,7 @@ def prepare_start_sequence(name):
         [
             (128 - len(s)) * [0] + [int(c) for c in s]
             for i in range(0, 3072, 32)
-            if (s := bin(int(b[i : i + 32], base=16))[2:])
+            for s in [bin(int(b[i: i + 32], base=16))[2:]]
         ]
         for b in blocks
     ]

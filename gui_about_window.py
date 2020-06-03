@@ -1,5 +1,6 @@
 import sys
 
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
     QMainWindow,
     QDesktopWidget,
@@ -30,6 +31,7 @@ class AboutWindow(QMainWindow):
         link = QLabel()
         link.setText('''<a href='https://github.com/Bananasis/PytonMusic-Inc.'>PytonMusic-Inc</a>''')
         link.setOpenExternalLinks(True)
+        link.setAlignment(Qt.AlignCenter)
 
         authors_text = QLabel("by: Dominika Szydło, Patryk Majewski, Ivan Feofilaktov and Gabriel Wechta.")
 
