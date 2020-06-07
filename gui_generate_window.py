@@ -101,7 +101,8 @@ class GeneratorWindow(QMainWindow):
         self.progress_bar.show()
         self.progress_bar.repaint()
         
-        generate = net1.generate if True else net2.generate #TODO
+        generate = net1.generate if self.notes_radio_button.isChecked() else net2.generate
+        print(generate)
         filename = re.sub(r'\W', '', self.file_name.text()) + ".mid"
         path = project_path + "/lib/" + filename
 
