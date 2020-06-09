@@ -25,9 +25,9 @@ The project is not finished yet. What we have already done is:
 
 What we still need to do:
 
-:hammer: update MIDI file generator,\
-:hammer: train some NNs, each fed data set of different genre,\
-:hammer: build trained models into the program,\
-:hammer: put it all together.
+:hammer: ~~update MIDI file generator~~ :heavy_check_mark: done,\
+:hammer: ~~train some NNs, each fed data set of different genre~~ :heavy_check_mark: done,\
+:hammer: ~~build trained models into the program~~, :heavy_plus_sign: kind of done, turns out they're pretty heavy,\
+:hammer: ~~put it all together~~ :heavy_check_mark: done.
 
 Hope you're here for the **grand opening** :closed_umbrella:
